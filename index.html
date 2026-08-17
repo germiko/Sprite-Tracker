@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortnite Sprite Tracker</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #121b2e;
+    --panel-2: #182238;
+    --border: #263049;
+    --text: #e8edf6;
+    --muted: #8b96ad;
+    --accent: #7c5cff;
+    --accent-2: #3ddc97;
+    --gold: #f5b93d;
+    --rare: #4aa3ff;
+    --epic: #b06bff;
+    --legendary: #f5a623;
+    --mythic: #ff5c8a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 20% -10%, #1a2740 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 16px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { margin-bottom: 16px; }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .stats.two { grid-template-columns: 1fr 1fr; margin-bottom: 14px; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .num { font-size: 20px; font-weight: 700; }
+  .stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .progress-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    overflow: hidden;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.3s ease;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .controls input, .controls select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .controls input { flex: 1; min-width: 140px; }
+
+  .rarity-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .rarity-Rare { background: rgba(74,163,255,0.15); color: var(--rare); }
+  .rarity-Epic { background: rgba(176,107,255,0.15); color: var(--epic); }
+  .rarity-Legendary { background: rgba(245,166,35,0.15); color: var(--legendary); }
+  .rarity-Mythic { background: rgba(255,92,138,0.15); color: var(--mythic); }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .card-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .card-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .ability { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+
+  .variant-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 0;
+    border-top: 1px solid var(--border);
+  }
+  .variant-row:first-child { border-top: none; }
+  .variant-name {
+    font-size: 13px;
+    min-width: 68px;
+    color: var(--muted);
+  }
+  .variant-name.active { color: var(--text); font-weight: 600; }
+  .level-dots { display: flex; gap: 5px; }
+  .level-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .level-dot.filled { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #0b1220; }
+  .level-dot.max { background: linear-gradient(135deg, var(--gold), #ffdf8a); border-color: transparent; color: #3a2a00; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 20px;
+    padding-bottom: 10px;
+  }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .reset-btn:hover { border-color: var(--mythic); color: var(--mythic); }
+  .loading { text-align: center; color: var(--muted); padding: 40px; }
+  .hidden { display: none !important; }
+  .save-note {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 50;
+  }
+  .save-note.show { opacity: 1; }
+  .save-note.error { color: var(--mythic); border-color: var(--mythic); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fortnite Sprite Tracker</h1>
+    <div class="sub">25 base Sprites · 117 obtainable variants · tap a level dot to set that variant's level (1-5)</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="statOwned">0</div><div class="lbl">Owned</div></div>
+    <div class="stat"><div class="num" id="statMastered">0</div><div class="lbl">Lvl 5</div></div>
+    <div class="stat"><div class="num" id="statPct">0%</div><div class="lbl">Complete</div></div>
+  </div>
+  <div class="stats two">
+    <div class="stat"><div class="num" id="statAvgLvl">0</div><div class="lbl">Avg level (owned variants)</div></div>
+    <div class="stat"><div class="num" id="statFullSprites">0/25</div><div class="lbl">Sprites fully lvl 5</div></div>
+  </div>
+  <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div class="controls">
+    <input type="text" id="searchBox" placeholder="Search sprite name...">
+    <select id="rarityFilter">
+      <option value="All">All rarities</option>
+      <option value="Rare">Rare</option>
+      <option value="Epic">Epic</option>
+      <option value="Legendary">Legendary</option>
+      <option value="Mythic">Mythic</option>
+    </select>
+    <select id="statusFilter">
+      <option value="All">All status</option>
+      <option value="Missing">Missing only</option>
+      <option value="Owned">Owned+</option>
+      <option value="Mastered">Level 5 only</option>
+    </select>
+  </div>
+
+  <div id="loading" class="loading">Loading your saved progress…</div>
+  <div id="cardList" class="hidden"></div>
+
+  <div class="card" style="margin-top: 4px;">
+    <div class="card-title" style="margin-bottom: 8px;">Save your progress</div>
+    <div class="ability" style="margin-bottom: 10px;">
+      Your taps auto-save as you go. As a backup, you can also tap <b>Export</b> for a save-code to keep somewhere safe (like Notes) — paste it into <b>Import</b> to restore it any time.
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+      <button class="reset-btn" id="exportBtn" style="border-color: var(--accent-2); color: var(--accent-2);">Export save-code</button>
+      <button class="reset-btn" id="importBtn" style="border-color: var(--accent); color: var(--accent);">Import save-code</button>
+      <button class="reset-btn" id="resetBtn">Reset all progress</button>
+    </div>
+    <textarea id="codeBox" placeholder="Save-code appears here, or paste one to import..." style="width:100%; min-height: 70px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 8px; font-size: 12px; font-family: monospace; resize: vertical;"></textarea>
+  </div>
+
+  <footer>
+    <div>Auto-saves as you tap. Export occasionally for a backup you control.</div>
+  </footer>
+</div>
+<div class="save-note" id="saveNote"></div>
+
+<script>
+const SPRITES = [
+  { id: "water", name: "Water", rarity: "Rare", ability: "Replenishes squad shields while in water.", variants: ["Normal","Gold","Gummy","Galaxy","Gem","Holofoil","Quack"] },
+  { id: "earth", name: "Earth", rarity: "Rare", ability: "Chance for extra rare chest items.", variants: ["Normal","Gold","Gummy","Galaxy","Gem","Cube","Quack"] },
+  { id: "fire", name: "Fire", rarity: "Rare", ability: "Releases a fiery burst after enough damage.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil","Cube","Quack"] },
+  { id: "fishy", name: "Fishy", rarity: "Rare", ability: "Faster swimming and a movement boost under fire.", variants: ["Normal","Gold","Gummy","Galaxy","Cube"] },
+  { id: "air", name: "Air", rarity: "Rare", ability: "Faster sprinting, higher jumps, and no fall damage.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "duck", name: "Duck", rarity: "Epic", ability: "Emoting and Jamming replenish shields.", variants: ["Normal","Gold","Gummy","Galaxy","Gem"] },
+  { id: "ghost", name: "Ghost", rarity: "Epic", ability: "Brief cloak after reloading.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "demon", name: "Demon", rarity: "Epic", ability: "Eliminations siphon health and shields.", variants: ["Normal","Gold","Gummy","Galaxy","Gem"] },
+  { id: "king", name: "King", rarity: "Epic", ability: "Increases pickaxe damage.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "aura", name: "Aura", rarity: "Epic", ability: "Grants a Shock Rock charge after enough damage.", variants: ["Normal","Gold","Gummy","Galaxy","Gem"] },
+  { id: "striker", name: "Striker", rarity: "Epic", ability: "Movement actions trigger Overdrive.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "dream", name: "Dream", rarity: "Legendary", ability: "Drops loot while leveling, Legendary loot at max.", variants: ["Normal","Gold","Gummy","Galaxy","Cube"] },
+  { id: "punk", name: "Punk", rarity: "Legendary", ability: "Can grant unlimited ammo temporarily.", variants: ["Normal","Gold","Gummy","Galaxy","Cube"] },
+  { id: "boss", name: "Boss", rarity: "Legendary", ability: "Increases maximum Health and Shield.", variants: ["Normal","Gold","Gummy","Galaxy","Cube"] },
+  { id: "seven", name: "Seven", rarity: "Legendary", ability: "Shows enemy foot trails to your squad.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "lootin-llama", name: "Lootin' Llama", rarity: "Legendary", ability: "Ammo boxes can upgrade a weapon (5–20% by level).", variants: ["Normal","Gold","Gummy","Galaxy","Gem"] },
+  { id: "peeky-peely", name: "Peeky Peely", rarity: "Legendary", ability: "Reveals rare variants/carriers at 40–80m, but reveals you too.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil"] },
+  { id: "batman", name: "Batman", rarity: "Mythic", ability: "Bat Cape redeploy and improved rare Sprite finds.", variants: ["Normal","Gold","Gummy","Galaxy","Holofoil","Cube"] },
+  { id: "grim-reaper", name: "Grim Reaper", rarity: "Mythic", ability: "Marks players who damage you.", variants: ["Normal","Gold","Gummy","Galaxy","Gem","Holofoil","Cube"] },
+  { id: "zero-point", name: "Zero Point", rarity: "Mythic", ability: "Creates a Shield Bubble Jr. when you heal.", variants: ["Normal","Gold","Gummy","Galaxy","Gem","Holofoil","Cube","Quack"] },
+  { id: "burnt-peanut", name: "Burnt Peanut", rarity: "Mythic", ability: "Eliminations can drop extra or Mythic loot.", variants: ["Normal"] },
+  { id: "vini-jr", name: "Vini Jr.", rarity: "Mythic", ability: "Destructive slidekick plus fire-rate and reload boosts.", variants: ["Normal"] },
+  { id: "pollo", name: "Pollo", rarity: "Mythic", ability: "Eliminations restore nearby squad shields over time.", variants: ["Normal"] },
+  { id: "john-wick", name: "John Wick", rarity: "Mythic", ability: "Reveals nearby enemies for 3–5s after a knock or elimination.", variants: ["Normal"] },
+  { id: "ironmouse", name: "Ironmouse", rarity: "Mythic", ability: "Regenerates low Health, grants Cloak plus low gravity while healing.", variants: ["Normal"] },
+];
+
+const TOTAL_ENTRIES = SPRITES.reduce((sum, s) => sum + s.variants.length, 0);
+const STORAGE_KEY = "sprite-progress";
+const MAX_LEVEL = 5;
+let levels = {}; // { "water:Normal": 0-5 }  (0 or absent = not owned)
+
+const cardList = document.getElementById('cardList');
+const loadingEl = document.getElementById('loading');
+
+function showNote(text, isError) {
+  const note = document.getElementById('saveNote');
+  note.textContent = text;
+  note.className = 'save-note show' + (isError ? ' error' : '');
+  clearTimeout(showNote._t);
+  showNote._t = setTimeout(() => note.classList.remove('show'), 1400);
+}
+
+async function loadProgress() {
+  levels = {};
+  try {
+    const result = await window.storage.get(STORAGE_KEY, false);
+    if (result && result.value) {
+      const parsed = JSON.parse(result.value);
+      levels = parsed.levels || {};
+    }
+  } catch (e) {
+    // No saved data yet, or storage unavailable — start empty either way.
+  }
+}
+
+let saveInFlight = false;
+let saveQueued = false;
+
+async function saveProgress() {
+  if (saveInFlight) { saveQueued = true; return; }
+  saveInFlight = true;
+  try {
+    const result = await window.storage.set(STORAGE_KEY, JSON.stringify({ levels: levels }), false);
+    if (!result) throw new Error('empty response');
+    showNote('Saved', false);
+  } catch (e) {
+    showNote('Auto-save failed \u2014 tap Export to back up manually', true);
+  }
+  saveInFlight = false;
+  if (saveQueued) {
+    saveQueued = false;
+    saveProgress();
+  }
+}
+
+function encodeSave() {
+  // Compact format: id1=v1n1:lvl,v2n2:lvl|id2=...
+  const parts = [];
+  SPRITES.forEach(s => {
+    const entries = [];
+    s.variants.forEach(v => {
+      const lvl = levels[s.id + ':' + v] || 0;
+      if (lvl > 0) entries.push(v[0] + lvl);
+    });
+    if (entries.length) parts.push(s.id + '=' + entries.join(','));
+  });
+  const raw = parts.join('|');
+  try {
+    return btoa(unescape(encodeURIComponent(raw)));
+  } catch (e) {
+    return raw;
+  }
+}
+
+function decodeSave(code) {
+  let raw;
+  try {
+    raw = decodeURIComponent(escape(atob(code.trim())));
+  } catch (e) {
+    raw = code.trim();
+  }
+  const result = {};
+  raw.split('|').forEach(chunk => {
+    if (!chunk) return;
+    const [id, list] = chunk.split('=');
+    const sprite = SPRITES.find(s => s.id === id);
+    if (!sprite || !list) return;
+    list.split(',').forEach(entry => {
+      const firstChar = entry[0];
+      const lvl = parseInt(entry.slice(1), 10);
+      const variant = sprite.variants.find(v => v[0] === firstChar);
+      if (variant && lvl >= 1 && lvl <= MAX_LEVEL) {
+        result[sprite.id + ':' + variant] = lvl;
+      }
+    });
+  });
+  return result;
+}
+
+function render() {
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+  const rarityFilter = document.getElementById('rarityFilter').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+
+  let ownedCount = 0, maxedCount = 0, levelSum = 0;
+  SPRITES.forEach(s => {
+    s.variants.forEach(v => {
+      const lvl = levels[s.id + ':' + v] || 0;
+      if (lvl >= 1) { ownedCount++; levelSum += lvl; }
+      if (lvl >= MAX_LEVEL) maxedCount++;
+    });
+  });
+
+  document.getElementById('statOwned').textContent = ownedCount;
+  document.getElementById('statMastered').textContent = maxedCount;
+  const pct = Math.round((ownedCount / TOTAL_ENTRIES) * 100);
+  document.getElementById('statPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('statAvgLvl').textContent = ownedCount ? (levelSum / ownedCount).toFixed(1) : '0';
+
+  const fullSprites = SPRITES.filter(s => s.variants.every(v => (levels[s.id + ':' + v] || 0) >= MAX_LEVEL)).length;
+  document.getElementById('statFullSprites').textContent = fullSprites + '/' + SPRITES.length;
+
+  cardList.innerHTML = '';
+
+  SPRITES.forEach(s => {
+    if (rarityFilter !== 'All' && s.rarity !== rarityFilter) return;
+    if (search && !s.name.toLowerCase().includes(search)) return;
+
+    let visibleVariants = s.variants;
+    if (statusFilter === 'Missing') {
+      visibleVariants = s.variants.filter(v => !(levels[s.id + ':' + v] > 0));
+      if (visibleVariants.length === 0) return;
+    } else if (statusFilter === 'Owned') {
+      visibleVariants = s.variants.filter(v => levels[s.id + ':' + v] > 0);
+      if (visibleVariants.length === 0) return;
+    } else if (statusFilter === 'Mastered') {
+      visibleVariants = s.variants.filter(v => (levels[s.id + ':' + v] || 0) >= MAX_LEVEL);
+      if (visibleVariants.length === 0) return;
+    }
+
+    const ownedForSprite = s.variants.filter(v => levels[s.id + ':' + v] > 0).length;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const head = document.createElement('div');
+    head.className = 'card-head';
+    head.innerHTML = `
+      <div class="card-title">${s.name} <span class="rarity-tag rarity-${s.rarity}">${s.rarity}</span></div>
+      <div class="card-count">${ownedForSprite}/${s.variants.length}</div>
+    `;
+    card.appendChild(head);
+
+    const ability = document.createElement('div');
+    ability.className = 'ability';
+    ability.textContent = s.ability;
+    card.appendChild(ability);
+
+    s.variants.forEach(v => {
+      const key = s.id + ':' + v;
+      const curLevel = levels[key] || 0;
+
+      const row = document.createElement('div');
+      row.className = 'variant-row';
+
+      const name = document.createElement('div');
+      name.className = 'variant-name' + (curLevel > 0 ? ' active' : '');
+      name.textContent = v;
+      row.appendChild(name);
+
+      const dots = document.createElement('div');
+      dots.className = 'level-dots';
+      for (let i = 1; i <= MAX_LEVEL; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'level-dot' + (i <= curLevel ? (curLevel >= MAX_LEVEL ? ' max' : ' filled') : '');
+        dot.textContent = i;
+        dot.addEventListener('click', () => {
+          // Tapping the current level backs it off by one; otherwise jump straight to that level.
+          const next = (levels[key] === i) ? i - 1 : i;
+          if (next <= 0) delete levels[key];
+          else levels[key] = next;
+          saveProgress();
+          render();
+        });
+        dots.appendChild(dot);
+      }
+      row.appendChild(dots);
+      card.appendChild(row);
+    });
+
+    cardList.appendChild(card);
+  });
+}
+
+document.getElementById('searchBox').addEventListener('input', render);
+document.getElementById('rarityFilter').addEventListener('change', render);
+document.getElementById('statusFilter').addEventListener('change', render);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('Clear all saved progress? This will also clear your auto-saved copy.')) {
+    levels = {};
+    saveProgress();
+    render();
+  }
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const code = encodeSave();
+  const box = document.getElementById('codeBox');
+  box.value = code || '(nothing tracked yet)';
+  box.focus();
+  box.select();
+  if (navigator.clipboard && code) {
+    navigator.clipboard.writeText(code).then(() => {
+      showNote('Save-code copied to clipboard', false);
+    }).catch(() => {
+      showNote('Save-code ready below \u2014 copy it manually', false);
+    });
+  } else {
+    showNote('Save-code ready below \u2014 copy it manually', false);
+  }
+});
+document.getElementById('importBtn').addEventListener('click', () => {
+  const box = document.getElementById('codeBox');
+  const code = box.value.trim();
+  if (!code) {
+    showNote('Paste a save-code into the box first', true);
+    return;
+  }
+  try {
+    const decoded = decodeSave(code);
+    if (Object.keys(decoded).length === 0) {
+      showNote('That code didn\u2019t match any known Sprites', true);
+      return;
+    }
+    levels = decoded;
+    render();
+    showNote('Progress imported', false);
+  } catch (e) {
+    showNote('Couldn\u2019t read that save-code', true);
+  }
+});
+
+(async function init() {
+  await loadProgress();
+  loadingEl.classList.add('hidden');
+  cardList.classList.remove('hidden');
+  render();
+})();
+</script>
+</body>
+</html>
